@@ -1,0 +1,219 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Parameters:
+  EfsFileSystemId:
+    Type: String
+    Description: "[REQUIRED] The name of EFS file system I"
+  DataReadIOBytesAlarmName:
+    Type: String
+    Description: "[optional] The name of DataReadIOBytesAlarm."
+    Default: ""
+  DataWriteIOBytesAlarmName:
+    Type: String
+    Description: "[optional] The name of DataWriteIOBytesAlarm."
+    Default: ""
+  BurstCreditBalanceAlarmName:
+    Type: String
+    Description: "[optional] The name of BurstCreditBalanceAlarm."
+    Default: ""
+  TotalIOThroughputIOPSAlarmName:
+    Type: String
+    Description: "[optional] The name of TotalIOThroughputIOPSAlarm."
+    Default: ""
+  ThroughputUtilizationAlarmName:
+    Type: String
+    Description: "[optional] The name of ThroughputUtilizationAlarm."
+    Default: ""
+  BytesThreshold:
+    Type: Number
+    Description: "[optional] The number(integer) of IO bytes threshold (bytes). Default is 536870912B(512MB)."
+    Default: 536870912
+  BurstCreditBalanceThreshold:
+    Type: Number
+    Description: "[optional] The number(integer) of burst credit threshold (bytes). Default is 1600000000000"
+    Default: 1600000000000
+  IOPSThreshold:
+    Type: Number
+    Description: "[optional] The number(integer) of IOPS threshold. Default is 1000"
+    Default: 1000
+  ThroughputThreshold:
+    Type: Number
+    Description: "[optional] The number(integer) of throughput threshold (%). Default is 75(%)"
+    Default: 75
+
+Conditions:
+  UseDataReadIOBytesAlarmName: !Not [!Equals [!Ref DataReadIOBytesAlarmName, ""]]
+  UseDataWriteIOBytesAlarmName: !Not [!Equals [!Ref DataWriteIOBytesAlarmName, ""]]
+  UseBurstCreditBalanceAlarmName: !Not [!Equals [!Ref BurstCreditBalanceAlarmName, ""]]
+  UseTotalIOThroughputIOPSAlarmName: !Not [!Equals [!Ref TotalIOThroughputIOPSAlarmName, ""]]
+  UseThroughputUtilizationAlarmName: !Not [!Equals [!Ref ThroughputUtilizationAlarmName, ""]]
+
+Resources:
+  DataReadIOBytesAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      ActionsEnabled: true
+      AlarmName: !If
+        - UseDataReadIOBytesAlarmName
+        - !Ref DataReadIOBytesAlarmName
+        - !Sub
+          - "EFS/${FileSystemId}/DataReadIOBytes"
+          - FileSystemId: !Ref EfsFileSystemId
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      DatapointsToAlarm: 1
+      Dimensions:
+        - Name: FileSystemId
+          Value: !Ref EfsFileSystemId
+      EvaluationPeriods: 1
+      Namespace: AWS/EFS
+      MetricName: DataReadIOBytes
+      Period: 60
+      Statistic: Average
+      Threshold: !Ref BytesThreshold
+      TreatMissingData: missing
+  DataWriteIOBytesAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      ActionsEnabled: true
+      AlarmName: !If
+        - UseDataWriteIOBytesAlarmName
+        - !Ref DataWriteIOBytesAlarmName
+        - !Sub
+          - "EFS/${FileSystemId}/DataWriteIOBytes"
+          - FileSystemId: !Ref EfsFileSystemId
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      DatapointsToAlarm: 1
+      Dimensions:
+        - Name: FileSystemId
+          Value: !Ref EfsFileSystemId
+      EvaluationPeriods: 1
+      Namespace: AWS/EFS
+      MetricName: DataWriteIOBytes
+      Period: 60
+      Statistic: Average
+      Threshold: !Ref BytesThreshold
+      TreatMissingData: missing
+  BurstCreditBalanceAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      ActionsEnabled: true
+      AlarmName: !If
+        - UseBurstCreditBalanceAlarmName
+        - !Ref BurstCreditBalanceAlarmName
+        - !Sub
+          - "EFS/${FileSystemId}/BurstCreditBalance"
+          - FileSystemId: !Ref EfsFileSystemId
+      ComparisonOperator: LessThanOrEqualToThreshold
+      DatapointsToAlarm: 1
+      Dimensions:
+        - Name: FileSystemId
+          Value: !Ref EfsFileSystemId
+      EvaluationPeriods: 1
+      Namespace: AWS/EFS
+      MetricName: BurstCreditBalance
+      Period: 60
+      Statistic: Average
+      Threshold: !Ref BurstCreditBalanceThreshold
+      TreatMissingData: missing
+  TotalIOThroughputIOPSAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      ActionsEnabled: true
+      AlarmName: !If
+        - UseTotalIOThroughputIOPSAlarmName
+        - !Ref TotalIOThroughputIOPSAlarmName
+        - !Sub
+          - "EFS/${FileSystemId}/TotalIOThroughputIOPS"
+          - FileSystemId: !Ref EfsFileSystemId
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      DatapointsToAlarm: 1
+      EvaluationPeriods: 1
+      Metrics:
+        - Id: e1
+          Expression: m1/PERIOD(m1)
+          Label: TotalThroughputIOPS
+          ReturnData: true 
+        - Id: m1
+          MetricStat:
+            Metric:
+              Namespace: AWS/EFS
+              MetricName: TotalIOBytes
+              Dimensions:
+                - Name: TotalIOBytes
+                  Value: !Ref EfsFileSystemId
+            Period: 60
+            Stat: Average
+          ReturnData: false
+      Threshold: !Ref IOPSThreshold
+      TreatMissingData: missing
+  ThroughputUtilizationAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      ActionsEnabled: true
+      AlarmName: !If
+        - UseThroughputUtilizationAlarmName
+        - !Ref ThroughputUtilizationAlarmName
+        - !Sub
+          - "EFS/${FileSystemId}/ThroughputUtilization"
+          - FileSystemId: !Ref EfsFileSystemId
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      DatapointsToAlarm: 1
+      EvaluationPeriods: 1
+      Metrics:
+        - Id: e4
+          Expression: "((e1)*100)/(e2)"
+          Label: Throughput utilization (%)
+          ReturnData: true
+        - Id: e1
+          Expression: "(m1/1048576)/PERIOD(m1)"
+          Label: Expression1
+          ReturnData: false
+        - Id: m1
+          MetricStat:
+            Metric:
+              Namespace: AWS/EFS
+              MetricName: MeteredIOBytes
+              Dimensions:
+              - Name: FileSystemId
+                Value: fs-0f030bcbe950779b7
+            Period: 60
+            Stat: Sum
+          ReturnData: false
+        - Id: e2
+          Expression: m2/1048576
+          Label: Expression2
+          ReturnData: false
+        - Id: m2
+          MetricStat:
+            Metric:
+              Namespace: AWS/EFS
+              MetricName: PermittedThroughput
+              Dimensions:
+              - Name: FileSystemId
+                Value: fs-0f030bcbe950779b7
+            Period: 60
+            Stat: Sum
+          ReturnData: false
+      Threshold: !Ref ThroughputThreshold
+      TreatMissingData: missing
+
+
+Outputs:
+  AlamrsList:
+    Value: !Join
+      - ","
+      - - !GetAtt DataReadIOBytesAlarm.Arn
+        - !GetAtt DataWriteIOBytesAlarm.Arn
+        - !GetAtt BurstCreditBalanceAlarm.Arn
+        - !GetAtt TotalIOThroughputIOPSAlarm.Arn
+        - !GetAtt ThroughputUtilizationAlarm.Arn
+  DataReadIOBytesAlarmArn:
+    Value: !GetAtt DataReadIOBytesAlarm.Arn
+  DataWriteIOBytesAlarmArn:
+    Value: !GetAtt DataWriteIOBytesAlarm.Arn
+  BurstCreditBalanceAlarmArn:
+    Value: !GetAtt BurstCreditBalanceAlarm.Arn
+  TotalIOThroughputIOPSAlarmArn:
+    Value: !GetAtt TotalIOThroughputIOPSAlarm.Arn
+  ThroughputUtilizationAlarmArn:
+    Value: !GetAtt ThroughputUtilizationAlarm.Arn

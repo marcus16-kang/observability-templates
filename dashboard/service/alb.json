@@ -1,0 +1,112 @@
+{
+  "type": "text",
+  "x": 0,
+  "y": 7,
+  "width": 24,
+  "height": 1,
+  "properties": {
+    "markdown": "# RDS"
+  }
+},
+{
+  "type": "metric",
+  "x": 0,
+  "y": 8,
+  "width": 5,
+  "height": 6,
+  "properties": {
+    "metrics": [
+      [
+        "AWS/RDS",
+        "ReadLatency",
+        "DBInstanceIdentifier",
+        "test-rds-3"
+      ]
+    ],
+    "view": "timeSeries",
+    "stacked": false,
+    "region": "us-east-1",
+    "stat": "Average",
+    "period": 60
+  }
+},
+{
+  "type": "metric",
+  "x": 5,
+  "y": 8,
+  "width": 5,
+  "height": 6,
+  "properties": {
+    "metrics": [
+      [
+        "AWS/RDS",
+        "WriteLatency",
+        "DBInstanceIdentifier",
+        "test-rds-3"
+      ]
+    ],
+    "view": "timeSeries",
+    "stacked": false,
+    "region": "us-east-1",
+    "stat": "Average",
+    "period": 60
+  }
+},
+{
+  "type": "metric",
+  "x": 15,
+  "y": 8,
+  "width": 5,
+  "height": 6,
+  "properties": {
+    "metrics": [
+      [
+        "AWS/RDS",
+        "WriteThroughput",
+        "DBInstanceIdentifier",
+        "test-rds-3"
+      ]
+    ],
+    "view": "timeSeries",
+    "stacked": false,
+    "region": "us-east-1",
+    "stat": "Average",
+    "period": 60
+  }
+},
+{
+  "type": "metric",
+  "x": 10,
+  "y": 8,
+  "width": 5,
+  "height": 6,
+  "properties": {
+    "metrics": [
+      [
+        "AWS/RDS",
+        "ReadThroughput",
+        "DBInstanceIdentifier",
+        "test-rds-3"
+      ]
+    ],
+    "view": "timeSeries",
+    "stacked": false,
+    "region": "us-east-1",
+    "stat": "Average",
+    "period": 60
+  }
+},
+{
+  "type": "alarm",
+  "x": 20,
+  "y": 8,
+  "width": 4,
+  "height": 6,
+  "properties": {
+    "title": "Latency Alarm",
+    "alarms": [
+      "arn:aws:cloudwatch:us-east-1:972209100553:alarm:RDS/test-aurora/WriteLatency",
+      "arn:aws:cloudwatch:us-east-1:972209100553:alarm:RDS/test-aurora/ReadLatency"
+    ]
+  }
+}

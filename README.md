@@ -1,0 +1,3 @@
+# Observability Templates
+
+- [Dashboard](dashboard/)

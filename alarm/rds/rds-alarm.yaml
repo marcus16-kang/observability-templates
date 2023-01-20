@@ -1,0 +1,80 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Parameters:
+  RdsClusterName:
+    Type: String
+    Description: "[REQUIRED] The name of RDS Cluster."
+  ReadLatencyAlarmName:
+    Type: String
+    Description: "[optional] The name of ReadLatencyAlarm."
+    Default: ""
+  WriteLatencyAlarmName:
+    Type: String
+    Description: "[optional] The name of WriteLatencyAlarm."
+    Default: ""
+  LatencyThreshold:
+    Type: Number
+    Description: "[optional] The number(double) of latency threshold (ms). Default is 1500ms."
+    Default: 1500
+
+Conditions:
+  UseReadLatencyAlarmName: !Not [!Equals [!Ref ReadLatencyAlarmName, ""]]
+  UseWriteLatencyAlarmName: !Not [!Equals [!Ref WriteLatencyAlarmName, ""]]
+
+Resources:
+  ReadLatencyAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      ActionsEnabled: true
+      AlarmName: !If
+        - UseReadLatencyAlarmName
+        - !Ref ReadLatencyAlarmName
+        - !Sub
+          - "RDS/${ClusterName}/ReadLatency"
+          - ClusterName: !Ref RdsClusterName
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      DatapointsToAlarm: 1
+      Dimensions:
+        - Name: DBClusterIdentifier
+          Value: !Ref RdsClusterName
+      EvaluationPeriods: 1
+      Namespace: AWS/RDS
+      MetricName: ReadLatency
+      Period: 60
+      Statistic: Average
+      Threshold: !Ref LatencyThreshold
+      TreatMissingData: missing
+  WriteLatencyAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      ActionsEnabled: true
+      AlarmName: !If
+        - UseWriteLatencyAlarmName
+        - !Ref WriteLatencyAlarmName
+        - !Sub
+          - "RDS/${ClusterName}/WriteLatency"
+          - ClusterName: !Ref RdsClusterName
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      DatapointsToAlarm: 1
+      Dimensions:
+        - Name: DBClusterIdentifier
+          Value: !Ref RdsClusterName
+      EvaluationPeriods: 1
+      Namespace: AWS/RDS
+      MetricName: WriteLatency
+      Period: 60
+      Statistic: Average
+      Threshold: !Ref LatencyThreshold
+      TreatMissingData: missing
+
+
+Outputs:
+  AlamrsList:
+    Value: !Join
+      - ","
+      - - !GetAtt ReadLatencyAlarm.Arn
+        - !GetAtt WriteLatencyAlarm.Arn
+  ReadLatencyAlarmArn:
+    Value: !GetAtt ReadLatencyAlarm.Arn
+  WriteLatencyAlarmArn:
+    Value: !GetAtt WriteLatencyAlarm.Arn

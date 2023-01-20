@@ -1,0 +1,311 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Parameters:
+  DynamoDBTableName:
+    Type: String
+    Description: "[REQUIRED] The name of DynamoDB table."
+  GetLatencyAlarmName:
+    Type: String
+    Description: "[optional] The name of GetLatencyAlarm."
+    Default: ""
+  PutLatencyAlarmName:
+    Type: String
+    Description: "[optional] The name of PutLatencyAlarm."
+    Default: ""
+  QueryLatencyAlarmName:
+    Type: String
+    Description: "[optional] The name of QueryLatencyAlarm."
+    Default: ""
+  ReadThrottleAlarmName:
+    Type: String
+    Description: "[optional] The name of ReadThrottleAlarm."
+    Default: ""
+  ScanLatencyAlarmName:
+    Type: String
+    Description: "[optional] The name of ScanLatencyAlarm."
+    Default: ""
+  WriteThrottleAlarmName:
+    Type: String
+    Description: "[optional] The name of WriteThrottleAlarm."
+    Default: ""
+  LatencyThreshold:
+    Type: Number
+    Description: "[optional] The number(double) of latency threshold (ms). Default is 1500ms."
+    Default: 1500
+  ThrottleThreshold:
+    Type: Number
+    Description: "[optional] The number of throttle threshold (count). Default is 1000."
+    Default: 1000.0
+
+Conditions:
+  UseGetLatencyAlarmName: !Not [!Equals [!Ref GetLatencyAlarmName, ""]]
+  UsePutLatencyAlarmName: !Not [!Equals [!Ref PutLatencyAlarmName, ""]]
+  UseQueryLatencyAlarmName: !Not [!Equals [!Ref QueryLatencyAlarmName, ""]]
+  UseReadThrottleAlarmName: !Not [!Equals [!Ref ReadThrottleAlarmName, ""]]
+  UseScanLatencyAlarmName: !Not [!Equals [!Ref ScanLatencyAlarmName, ""]]
+  UseWriteThrottleAlarmName: !Not [!Equals [!Ref WriteThrottleAlarmName, ""]]
+
+Resources:
+  GetLatencyAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      ActionsEnabled: true
+      AlarmName: !If
+        - UseGetLatencyAlarmName
+        - !Ref GetLatencyAlarmName
+        - !Sub
+          - "DynamoDB/${TableName}/GetLatency"
+          - TableName: !Ref DynamoDBTableName
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      DatapointsToAlarm: 1
+      Dimensions:
+        - Name: TableName
+          Value: !Ref DynamoDBTableName
+        - Name: Operation
+          Value: GetItem
+      EvaluationPeriods: 1
+      Namespace: AWS/DynamoDB
+      MetricName: SuccessfulRequestLatency
+      Period: 60
+      Statistic: Average
+      Threshold: !Ref LatencyThreshold
+      TreatMissingData: missing
+  PutLatencyAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      ActionsEnabled: true
+      AlarmName: !If
+        - UsePutLatencyAlarmName
+        - !Ref PutLatencyAlarmName
+        - !Sub
+          - "DynamoDB/${TableName}/PutLatency"
+          - TableName: !Ref DynamoDBTableName
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      DatapointsToAlarm: 1
+      Dimensions:
+        - Name: TableName
+          Value: !Ref DynamoDBTableName
+        - Name: Operation
+          Value: PutItem
+      EvaluationPeriods: 1
+      Namespace: AWS/DynamoDB
+      MetricName: SuccessfulRequestLatency
+      Period: 60
+      Statistic: Average
+      Threshold: !Ref LatencyThreshold
+      TreatMissingData: missing
+  QueryLatencyAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      ActionsEnabled: true
+      AlarmName: !If
+        - UseQueryLatencyAlarmName
+        - !Ref QueryLatencyAlarmName
+        - !Sub
+          - "DynamoDB/${TableName}/QueryLatency"
+          - TableName: !Ref DynamoDBTableName
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      DatapointsToAlarm: 1
+      Dimensions:
+        - Name: TableName
+          Value: !Ref DynamoDBTableName
+        - Name: Operation
+          Value: Query
+      EvaluationPeriods: 1
+      MetricName: SuccessfulRequestLatency
+      Namespace: AWS/DynamoDB
+      Period: 60
+      Statistic: Average
+      Threshold: !Ref LatencyThreshold
+      TreatMissingData: missing
+  ReadThrottleAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      ActionsEnabled: true
+      AlarmName: !If
+        - UseReadThrottleAlarmName
+        - !Ref ReadThrottleAlarmName
+        - !Sub
+          - "DynamoDB/${TableName}/ReadThrottle"
+          - TableName: !Ref DynamoDBTableName
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      DatapointsToAlarm: 1
+      EvaluationPeriods: 1
+      Metrics:
+        - Id: e1
+          Expression: m1+m2+m3+m4
+          Label: ReadThrottleCount
+          ReturnData: true
+        - Id: m1
+          MetricStat:
+            Metric:
+              Namespace: AWS/DynamoDB
+              MetricName: ThrottleRequests
+              Dimensions:
+                - Name: TableName
+                  Value: !Ref DynamoDBTableName
+                - Name: Operation
+                  Value: GetItem
+            Period: 60
+            Stat: Sum
+          ReturnData: false
+        - Id: m2
+          MetricStat:
+            Metric:
+              Namespace: AWS/DynamoDB
+              MetricName: ThrottleRequests
+              Dimensions:
+                - Name: TableName
+                  Value: !Ref DynamoDBTableName
+                - Name: Operation
+                  Value: Scan
+            Period: 60
+            Stat: Sum
+          ReturnData: false
+        - Id: m3
+          MetricStat:
+            Metric:
+              Namespace: AWS/DynamoDB
+              MetricName: ThrottleRequests
+              Dimensions:
+                - Name: TableName
+                  Value: !Ref DynamoDBTableName
+                - Name: Operation
+                  Value: Query
+            Period: 60
+            Stat: Sum
+          ReturnData: false
+        - Id: m4
+          MetricStat:
+            Metric:
+              Namespace: AWS/DynamoDB
+              MetricName: ThrottleRequests
+              Dimensions:
+                - Name: TableName
+                  Value: !Ref DynamoDBTableName
+                - Name: Operation
+                  Value: BatchGetItem
+            Period: 60
+            Stat: Sum
+          ReturnData: false
+      Threshold: !Ref ThrottleThreshold
+      TreatMissingData: missing
+  ScanLatencyAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      ActionsEnabled: true
+      AlarmName: !If
+        - UseScanLatencyAlarmName
+        - !Ref ScanLatencyAlarmName
+        - !Sub
+          - "DynamoDB/${TableName}/ScanLatency"
+          - TableName: !Ref DynamoDBTableName
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      DatapointsToAlarm: 1
+      Dimensions:
+        - Name: TableName
+          Value: !Ref DynamoDBTableName
+        - Name: Operation
+          Value: Scan
+      EvaluationPeriods: 1
+      MetricName: SuccessfulRequestLatency
+      Namespace: AWS/DynamoDB
+      Period: 60
+      Statistic: Average
+      Threshold: !Ref LatencyThreshold
+      TreatMissingData: missing
+  WriteThrottleAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      ActionsEnabled: true
+      AlarmName: !If
+        - UseWriteThrottleAlarmName
+        - !Ref WriteThrottleAlarmName
+        - !Sub
+          - "DynamoDB/${TableName}/WriteThrottle"
+          - TableName: !Ref DynamoDBTableName
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      DatapointsToAlarm: 1
+      EvaluationPeriods: 1
+      Metrics:
+        - Id: e1
+          Expression: m1+m2+m3+m4
+          Label: WriteThrottleCount
+          ReturnData: true
+        - Id: m1
+          MetricStat:
+            Metric:
+              Namespace: AWS/DynamoDB
+              MetricName: ThrottleRequests
+              Dimensions:
+                - Name: TableName
+                  Value: !Ref DynamoDBTableName
+                - Name: Operation
+                  Value: PutItem
+            Period: 60
+            Stat: Sum
+          ReturnData: false
+        - Id: m2
+          MetricStat:
+            Metric:
+              Namespace: AWS/DynamoDB
+              MetricName: ThrottleRequests
+              Dimensions:
+                - Name: TableNameAWS/DynamoDB
+                  Value: !Ref DynamoDBTableName
+                - Name: Operation
+                  Value: UpdateItem
+            Period: 60
+            Stat: Sum
+          ReturnData: false
+        - Id: m3
+          MetricStat:
+            Metric:
+              Namespace: AWS/DynamoDB
+              MetricName: ThrottleRequests
+              Dimensions:
+                - Name: TableName
+                  Value: !Ref DynamoDBTableName
+                - Name: Operation
+                  Value: DeleteItem
+            Period: 60
+            Stat: Sum
+          ReturnData: false
+        - Id: m4
+          MetricStat:
+            Metric:
+              Namespace: AWS/DynamoDB
+              MetricName: ThrottleRequests
+              Dimensions:
+                - Name: TableName
+                  Value: !Ref DynamoDBTableName
+                - Name: Operation
+                  Value: BatchWriteItem
+            Period: 60
+            Stat: Sum
+          ReturnData: false
+      Threshold: !Ref ThrottleThreshold
+      TreatMissingData: missing
+
+Outputs:
+  AlamrsList:
+    Value: !Join
+      - ","
+      - - !GetAtt GetLatencyAlarm.Arn
+        - !GetAtt PutLatencyAlarm.Arn
+        - !GetAtt QueryLatencyAlarm.Arn
+        - !GetAtt ReadThrottleAlarm.Arn
+        - !GetAtt ScanLatencyAlarm.Arn
+        - !GetAtt WriteThrottleAlarm.Arn
+  GetLatencyAlarmArn:
+    Value: !GetAtt GetLatencyAlarm.Arn
+  PutLatencyAlarmArn:
+    Value: !GetAtt PutLatencyAlarm.Arn
+  QueryLatencyAlarmArn:
+    Value: !GetAtt QueryLatencyAlarm.Arn
+  ReadThrottleAlarmArn:
+    Value: !GetAtt ReadThrottleAlarm.Arn
+  ScanLatencyAlarmArn:
+    Value: !GetAtt ScanLatencyAlarm.Arn
+  WriteThrottleAlarmArn:
+    Value: !GetAtt WriteThrottleAlarm.Arn

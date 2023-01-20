@@ -1,0 +1,150 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Parameters:
+  SnsLogGroupName:
+    Type: String
+    Description: '[REQUIRED] The name of log group.'
+    Default: '/aws/rds/event'
+  SnsLoggingRoleName:
+    Type: String
+    Description: "[REQUIRED] The name of lambda function's role."
+  SnsLoggingLambdaFunctionName:
+    Type: String
+    Description: '[REQUIRED] The name of lambda function.'
+  SnsTopicName:
+    Type: String
+    Description: '[REQUIRED] The name of SNS topic.'
+  # KmsKeyId:
+  #   Type: String
+  #   Description: '[optional] The arn of KMS key.'
+  #   Default: ''
+  RdsEventSubscriptionName:
+    Type: String
+    Description: '[REQUIRED] The name of RDS event subscription.'
+  ProjectName:
+    Type: String
+    Description: '[REQUIRED] The name of this project.'
+
+Conditions:
+  UseCMK: !Not [!Equals [!Ref KmsKeyId, ""]]
+
+Resources:
+  SnsLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Ref SnsLogGroupName
+      RetentionInDays: 30
+      Tags:
+        - Key: Name
+          Value: !Ref SnsLogGroupName
+        - Key: project
+          Value: !Ref ProjectName
+  SnsLoggingRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Path: /
+      RoleName: !Ref SnsLoggingRoleName
+      Tags:
+        - Key: Name
+          Value: !Ref SnsLoggingRoleName
+        - Key: project
+          Value: !Ref ProjectName
+  SnsLoggingLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Architectures: 
+        - arm64
+      Code:
+        ZipFile: |
+          import boto3
+          import json
+
+          def handler(event, context):
+              print(event)
+
+              return 'Hello, World!'
+      FunctionName: !Ref SnsLoggingLambdaFunctionName
+      Handler: index.handler
+      Role: !GetAtt SnsLoggingRole.Arn
+      Runtime: python3.9
+      Tags:
+        - Key: Name
+          Value: !Ref SnsLoggingLambdaFunctionName
+        - Key: project
+          Value: !Ref ProjectName
+      Timeout: 10
+  SnsTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      FifoTopic: false
+      # KmsMasterKeyId: !If
+      #   - UseCMK
+      #   - !Ref KmsKeyId
+      #   - "/alias/aws/sns"
+      TopicName: !Ref SnsTopicName
+      Tags:
+        - Key: Name
+          Value: !Ref SnsTopicName
+        - Key: project
+          Value: !Ref ProjectName
+  SnsPolicy:
+    Type: AWS::SNS::TopicPolicy
+    Properties:
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            AWS: "*"
+          Action:
+          - SNS:Publish
+          - SNS:RemovePermission
+          - SNS:SetTopicAttributes
+          - SNS:DeleteTopic
+          - SNS:ListSubscriptionsByTopic
+          - SNS:GetTopicAttributes
+          - SNS:AddPermission
+          - SNS:Subscribe
+          Resource: !Ref SnsTopic
+          Condition:
+            StringEquals:
+              AWS:SourceOwner: !Ref AWS::AccountId
+      Topics:
+        - !Ref SnsTopic
+  SnsSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      Endpoint: !GetAtt SnsLoggingLambdaFunction.Arn
+      Protocol: lambda
+      TopicArn: !Ref SnsTopic
+  EventSubscription:
+    Type: AWS::RDS::EventSubscription
+    DependsOn: SnsPolicy
+    Properties:
+      Enabled: true
+      # EventCategories:
+      #   - ""
+      # SourceType: 
+      SubscriptionName: !Ref RdsEventSubscriptionName
+      SnsTopicArn: !Ref SnsTopic
+      Tags:
+        - Key: Name
+          Value: !Ref RdsEventSubscriptionName
+        - Key: project
+          Value: !Ref ProjectName
+ 
+Outputs:
+  SnsTopicArn:
+    Value: !Ref SnsTopic
+  

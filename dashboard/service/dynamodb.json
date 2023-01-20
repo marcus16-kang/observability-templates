@@ -1,0 +1,453 @@
+{
+    "height": 1,
+    "width": 24,
+    "y": 7,
+    "x": 0,
+    "type": "text",
+    "properties": {
+        "markdown": "# DynamoDB"
+    }
+},
+{
+    "height": 6,
+    "width": 5,
+    "y": 8,
+    "x": 0,
+    "type": "metric",
+    "properties": {
+        "title": "Read usage (average units/second)",
+        "view": "timeSeries",
+        "stacked": false,
+        "region": "REGION",
+        "stat": "Average",
+        "period": 60,
+        "yAxis": {
+            "left": {
+                "showUnits": false
+            }
+        },
+        "metrics": [
+            [
+                "AWS/DynamoDB",
+                "ProvisionedReadCapacityUnits",
+                "TableName",
+                "DYNAMODB_TABLE_NAME",
+                {
+                    "label": "Provisioned",
+                    "color": "#E02020"
+                }
+            ],
+            [
+                ".",
+                "ConsumedReadCapacityUnits",
+                ".",
+                ".",
+                {
+                    "stat": "Sum",
+                    "id": "m1",
+                    "visible": false
+                }
+            ],
+            [
+                {
+                    "expression": "m1/PERIOD(m1)",
+                    "label": "Consumed",
+                    "id": "e1",
+                    "color": "#0073BB",
+                    "region": "REGION"
+                }
+            ]
+        ]
+    }
+},
+{
+    "height": 6,
+    "width": 5,
+    "y": 8,
+    "x": 5,
+    "type": "metric",
+    "properties": {
+        "title": "Read throttled requests (count)",
+        "view": "timeSeries",
+        "stacked": false,
+        "region": "REGION",
+        "stat": "Sum",
+        "period": 60,
+        "yAxis": {
+            "left": {
+                "showUnits": false
+            }
+        },
+        "metrics": [
+            [
+                "AWS/DynamoDB",
+                "ThrottledRequests",
+                "TableName",
+                "DYNAMODB_TABLE_NAME",
+                "Operation",
+                "GetItem",
+                {
+                    "color": "#0073BB"
+                }
+            ],
+            [
+                "...",
+                "Scan",
+                {
+                    "color": "#FF7F0F"
+                }
+            ],
+            [
+                "...",
+                "Query",
+                {
+                    "color": "#2DA02D"
+                }
+            ],
+            [
+                "...",
+                "BatchGetItem",
+                {
+                    "color": "#9468BD"
+                }
+            ]
+        ]
+    }
+},
+{
+    "height": 6,
+    "width": 5,
+    "y": 8,
+    "x": 10,
+    "type": "metric",
+    "properties": {
+        "title": "Write usage (average units/second)",
+        "view": "timeSeries",
+        "stacked": false,
+        "region": "REGION",
+        "stat": "Average",
+        "period": 60,
+        "yAxis": {
+            "left": {
+                "showUnits": false
+            }
+        },
+        "metrics": [
+            [
+                "AWS/DynamoDB",
+                "ProvisionedWriteCapacityUnits",
+                "TableName",
+                "DYNAMODB_TABLE_NAME",
+                {
+                    "label": "Provisioned",
+                    "color": "#E02020"
+                }
+            ],
+            [
+                ".",
+                "ConsumedWriteCapacityUnits",
+                ".",
+                ".",
+                {
+                    "stat": "Sum",
+                    "id": "m1",
+                    "visible": false
+                }
+            ],
+            [
+                {
+                    "expression": "m1/PERIOD(m1)",
+                    "label": "Consumed",
+                    "id": "e1",
+                    "color": "#0073BB",
+                    "region": "REGION"
+                }
+            ]
+        ]
+    }
+},
+{
+    "height": 6,
+    "width": 5,
+    "y": 8,
+    "x": 15,
+    "type": "metric",
+    "properties": {
+        "title": "Write throttled requests (count)",
+        "view": "timeSeries",
+        "stacked": false,
+        "region": "REGION",
+        "stat": "Sum",
+        "period": 60,
+        "yAxis": {
+            "left": {
+                "showUnits": false
+            }
+        },
+        "metrics": [
+            [
+                "AWS/DynamoDB",
+                "ThrottledRequests",
+                "TableName",
+                "DYNAMODB_TABLE_NAME",
+                "Operation",
+                "PutItem",
+                {
+                    "color": "#0073BB"
+                }
+            ],
+            [
+                "...",
+                "UpdateItem",
+                {
+                    "color": "#FF7F0F"
+                }
+            ],
+            [
+                "...",
+                "DeleteItem",
+                {
+                    "color": "#2DA02D"
+                }
+            ],
+            [
+                "...",
+                "BatchWriteItem",
+                {
+                    "color": "#9468BD"
+                }
+            ]
+        ]
+    }
+},
+{
+    "height": 6,
+    "width": 5,
+    "y": 14,
+    "x": 0,
+    "type": "metric",
+    "properties": {
+        "title": "Get latency (milliseconds)",
+        "view": "timeSeries",
+        "stacked": false,
+        "region": "REGION",
+        "stat": "Average",
+        "period": 60,
+        "yAxis": {
+            "left": {
+                "showUnits": false
+            }
+        },
+        "metrics": [
+            [
+                "AWS/DynamoDB",
+                "SuccessfulRequestLatency",
+                "TableName",
+                "DYNAMODB_TABLE_NAME",
+                "Operation",
+                "GetItem",
+                {
+                    "color": "#0073BB",
+                    "label": "Get latency"
+                }
+            ],
+            [
+                "...",
+                "BatchGetItem",
+                {
+                    "color": "#9468BD",
+                    "label": "Batch get latency"
+                }
+            ]
+        ]
+    }
+},
+{
+    "height": 6,
+    "width": 5,
+    "y": 14,
+    "x": 5,
+    "type": "metric",
+    "properties": {
+        "title": "Put latency (milliseconds)",
+        "view": "timeSeries",
+        "stacked": false,
+        "region": "REGION",
+        "stat": "Average",
+        "period": 60,
+        "yAxis": {
+            "left": {
+                "showUnits": false
+            }
+        },
+        "metrics": [
+            [
+                "AWS/DynamoDB",
+                "SuccessfulRequestLatency",
+                "TableName",
+                "DYNAMODB_TABLE_NAME",
+                "Operation",
+                "PutItem",
+                {
+                    "stat": "Average",
+                    "color": "#0073BB",
+                    "label": "Put latency"
+                }
+            ],
+            [
+                "...",
+                "BatchWriteItem",
+                {
+                    "color": "#9468BD",
+                    "label": "Batch write latency"
+                }
+            ]
+        ]
+    }
+},
+{
+    "height": 6,
+    "width": 5,
+    "y": 14,
+    "x": 10,
+    "type": "metric",
+    "properties": {
+        "title": "Query latency (milliseconds)",
+        "view": "timeSeries",
+        "stacked": false,
+        "region": "REGION",
+        "stat": "Average",
+        "period": 60,
+        "yAxis": {
+            "left": {
+                "showUnits": false
+            }
+        },
+        "metrics": [
+            [
+                "AWS/DynamoDB",
+                "SuccessfulRequestLatency",
+                "TableName",
+                "DYNAMODB_TABLE_NAME",
+                "Operation",
+                "Query"
+            ]
+        ]
+    }
+},
+{
+    "height": 6,
+    "width": 5,
+    "y": 14,
+    "x": 15,
+    "type": "metric",
+    "properties": {
+        "title": "Scan latency (milliseconds)",
+        "view": "timeSeries",
+        "stacked": false,
+        "region": "REGION",
+        "stat": "Average",
+        "period": 60,
+        "yAxis": {
+            "left": {
+                "showUnits": false
+            }
+        },
+        "metrics": [
+            [
+                "AWS/DynamoDB",
+                "SuccessfulRequestLatency",
+                "TableName",
+                "DYNAMODB_TABLE_NAME",
+                "Operation",
+                "Scan"
+            ]
+        ]
+    }
+},
+{
+    "height": 6,
+    "width": 6,
+    "y": 20,
+    "x": 0,
+    "type": "metric",
+    "properties": {
+        "title": "User errors (count)",
+        "view": "timeSeries",
+        "stacked": false,
+        "region": "REGION",
+        "stat": "Sum",
+        "period": 60,
+        "yAxis": {
+            "left": {
+                "showUnits": false
+            }
+        },
+        "metrics": [
+            [
+                "AWS/DynamoDB",
+                "UserErrors",
+                "TableName",
+                "DYNAMODB_TABLE_NAME"
+            ]
+        ]
+    }
+},
+{
+    "height": 6,
+    "width": 6,
+    "y": 20,
+    "x": 6,
+    "type": "metric",
+    "properties": {
+        "title": "Conditional check failed (count)",
+        "view": "timeSeries",
+        "stacked": false,
+        "region": "REGION",
+        "stat": "Sum",
+        "period": 60,
+        "yAxis": {
+            "left": {
+                "showUnits": false
+            }
+        },
+        "metrics": [
+            [
+                "AWS/DynamoDB",
+                "ConditionalCheckFailedRequests",
+                "TableName",
+                "DYNAMODB_TABLE_NAME"
+            ]
+        ]
+    }
+},
+{
+    "height": 6,
+    "width": 4,
+    "y": 8,
+    "x": 20,
+    "type": "alarm",
+    "properties": {
+        "title": "ThrottleAlarm",
+        "alarms": [
+            "ReadThrottleAlarm",
+            "WriteThrottleError"
+        ]
+    }
+},
+{
+    "type": "alarm",
+    "x": 20,
+    "y": 14,
+    "width": 4,
+    "height": 6,
+    "properties": {
+        "title": "Latency Alarm",
+        "alarms": [
+            "ScanLatencyAlarm",
+            "QueryLatencyAlarm",
+            "PutLatencyAlarm",
+            "GetLatencyAlarm"
+        ]
+    }
+}
