@@ -12,24 +12,30 @@ Parameters:
     Type: String
     Description: "[optional] The name of HTTPCode_Target_5XX_CountAlarm."
     Default: ""
+  HTTPCodeELB5XXCountAlarmName:
+    Type: String
+    Description: "[optional] The name of HTTPCode_ELB_5XX_CountAlarm."
+    Default: ""
   TargetResponseTimeAlarmName:
     Type: String
     Description: "[optional] The name of TargetResponseTimeAlarm."
     Default: ""
   TargetCountThreshold:
     Type: Number
-    Description: "[optional] The number of HTTPCode_Target_5XX_Count threshold. Default is 100(count)."
-    Default: 100
+    Description: "[optional] The number of HTTPCode_Target_5XX_Count and HTTPCode_ELB_5XX_Count threshold. Default is 100(count)."
+    Default: '100'
   TargetResponseThreshold:
     Type: Number
     Description: "[optional] The number(doucle) of TargetResponseTime threshold. Default is 2.0(s)."
-    Default: 2.0
+    Default: '2.0'
 
 Conditions:
   UseRequestCountAnomalyAlarmName:
     !Not [!Equals [!Ref RequestCountAnomalyAlarmName, ""]]
   UseHTTPCodeTarget5XXCountAlarmName:
     !Not [!Equals [!Ref HTTPCodeTarget5XXCountAlarmName, ""]]
+  UseHTTPCodeELB5XXCountAlarmName:
+    !Not [!Equals [!Ref HTTPCodeELB5XXCountAlarmName, ""]]
   UseTargetResponseTimeAlarmName:
     !Not [!Equals [!Ref TargetResponseTimeAlarmName, ""]]
 
@@ -95,6 +101,32 @@ Resources:
       Statistic: Sum
       Threshold: !Ref TargetCountThreshold
       TreatMissingData: missing
+  HTTPCodeELB5XXCountAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      ActionsEnabled: true
+      AlarmName: !If
+        - UseHTTPCodeELB5XXCountAlarmName
+        - !Ref HTTPCodeELB5XXCountAlarmName
+        - !Sub
+          - "ApplicationLoadBalancer/${AlbName}/HTTPCodeELB5XXCount"
+          - AlbName: !Select
+              - 1
+              - !Split
+                - "/"
+                - !Ref ApplicationLoadBalancerArn
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      DatapointsToAlarm: 1
+      Dimensions:
+        - Name: LoadBalancer
+          Value: !Ref ApplicationLoadBalancerArn
+      EvaluationPeriods: 1
+      MetricName: HTTPCode_ELB_5XX_Count
+      Namespace: AWS/ApplicationELB 
+      Period: 60
+      Statistic: Sum
+      Threshold: !Ref TargetCountThreshold
+      TreatMissingData: missing
   TargetResponseTimeAlarm:
     Type: AWS::CloudWatch::Alarm
     Properties:
@@ -133,5 +165,7 @@ Outputs:
     Value: !GetAtt RequestCountAnomalyAlarm.Arn
   HTTPCodeTarget5XXCountAlarmArn:
     Value: !GetAtt HTTPCodeTarget5XXCountAlarm.Arn
+  HTTPCodeELB5XXCountAlarmArn:
+    Value: !GetAtt HTTPCodeELB5XXCountAlarm.Arn
   TargetResponseTimeAlarmArn:
     Value: !GetAtt TargetResponseTimeAlarm.Arn
