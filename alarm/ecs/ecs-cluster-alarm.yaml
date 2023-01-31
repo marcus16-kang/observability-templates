@@ -1,0 +1,108 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Parameters:
+  ClusterName:
+    Type: String
+    Description: "[REQUIRED] The name of ECS cluster."
+  CpuUtilizationAlarmName:
+    Type: String
+    Description: "[optional] The name of CpuUtilizationAlarm."
+    Default: ""
+  MemoryUtilizationAlarmName:
+    Type: String
+    Description: "[optional] The name of MemoryUtilizationAlarm."
+    Default: ""
+  CpuUtilizationThreshold:
+    Type: Number
+    Description: "[optional] The number of CPUUtilization threshold. Default is 70(%)."
+    Default: '70'
+  MemoryUtilizationThreshold:
+    Type: Number
+    Description: "[optional] The number of MemoryUtilization threshold. Default is 70(%)."
+    Default: '70'
+
+Conditions:
+  UseCpuUtilizationAlarmName:
+    !Not [!Equals [!Ref CpuUtilizationAlarmName, ""]]
+  UseMemoryUtilizationAlarmName:
+    !Not [!Equals [!Ref MemoryUtilizationAlarmName, ""]]
+
+Resources:
+  CpuUtilizationAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      ActionsEnabled: true
+      AlarmName: !If
+        - UseCpuUtilizationAlarmName
+        - !Ref CpuUtilizationAlarmName
+        - !Sub
+          - "ECS/${cluster_name}/CpuUtilization"
+          - cluster_name: !Ref ClusterName
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      DatapointsToAlarm: 1
+      EvaluationPeriods: 1
+      Dimensions:
+        - Name: ClusterName
+          Value: !Ref ClusterName
+      MetricName: CPUUtilization
+      Namespace: AWS/ECS
+      Period: 60
+      Statistic: Average
+      Threshold: !Ref CpuUtilizationThreshold
+      TreatMissingData: missing
+  
+  MemoryUtilizationAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      ActionsEnabled: true
+      AlarmName: !If
+        - UseMemoryUtilizationAlarmName
+        - !Ref MemoryUtilizationAlarmName
+        - !Sub
+          - "ECS/${cluster_name}/MemoryUtilization"
+          - cluster_name: !Ref ClusterName
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      DatapointsToAlarm: 1
+      EvaluationPeriods: 1
+      Dimensions:
+        - Name: ClusterName
+          Value: !Ref ClusterName
+      MetricName: MemoryUtilization
+      Namespace: AWS/ECS
+      Period: 60
+      Statistic: Average
+      Threshold: !Ref MemoryUtilizationThreshold
+      TreatMissingData: missing
+
+Outputs:
+  AlamrsList:
+    Value: !Join
+      - ','
+      - - !GetAtt CpuUtilizationAlarm.Arn
+        - !GetAtt MemoryUtilizationAlarm.Arn
+  
+  CpuUtilizationAlarmArn:
+    Value: !GetAtt CpuUtilizationAlarm.Arn
+  
+  MemoryUtilizationAlarmArn:
+    Value: !GetAtt MemoryUtilizationAlarm.Arn
+  
+  AlarmDashboard:
+    Value: !Sub
+      - |
+        {
+            "type": "alarm",
+            "x": 6,
+            "y": 0,
+            "width": 6,
+            "height": 2,
+            "properties": {
+                "title": "ECS Clutser Alarms",
+                "alarms": [
+                    "${cpu_utilization_alarm_arn}",
+                    "${memory_utilization_alarm_arn}",
+                ]
+            }
+        },
+      - cpu_utilization_alarm_arn: !GetAtt CpuUtilizationAlarm.Arn
+        memory_utilization_alarm_arn: !GetAtt MemoryUtilizationAlarm.Arn
